@@ -1,15 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
 
-import { applyMove, canUndo, createInitialState, undoMove } from '../game/gameEngine';
+import { applyMove, canUndo, undoMove } from '../game/gameEngine';
 import type { GameState, MoveOutcome, MoveResult } from '../game/types';
-import { DEFAULT_SETTINGS, type Settings } from '../utils/storage';
-import { useAutoSave, useLoadPersisted } from './useGamePersistence';
+import { useLatest } from './useLatest';
 
-export interface GameController {
-  hydrated: boolean;
+/** One playable board (classic game or daily puzzle). */
+export interface BoardController {
   game: GameState;
-  best: number;
-  settings: Settings;
   /** Bumped when the board changes without a move (restart, undo, restore), so cells skip move animations. */
   boardEpoch: number;
   /** Result of the most recent move, for effects. Null after restart/undo. */
@@ -19,16 +16,19 @@ export interface GameController {
   restart: () => void;
   undo: () => boolean;
   canUndo: boolean;
-  updateSettings: (patch: Partial<Settings>) => void;
+  /** Replaces the position without animation (restore from storage, new day). */
+  load: (state: GameState) => void;
 }
 
-export function useGameController(): GameController {
-  const [game, setGame] = useState<GameState>(() => createInitialState());
-  const [best, setBest] = useState(0);
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+export function useBoardController(
+  makeInitial: () => GameState,
+  onMove?: (result: MoveResult, state: GameState) => void,
+): BoardController {
+  const [game, setGame] = useState<GameState>(makeInitial);
   const [lastResult, setLastResult] = useState<MoveResult | null>(null);
-  const [hydrated, setHydrated] = useState(false);
   const [boardEpoch, setBoardEpoch] = useState(0);
+  const makeInitialRef = useLatest(makeInitial);
+  const onMoveRef = useLatest(onMove);
 
   // The ref is the authoritative copy for synchronous validation, so two
   // rapid drops can never both apply against the same position.
@@ -39,16 +39,14 @@ export function useGameController(): GameController {
     setGame(next);
   }, []);
 
-  useLoadPersisted((persisted) => {
-    // Never clobber a game the player already started while storage was loading.
-    if (persisted.game && gameRef.current.moveCount === 0) {
-      commit(persisted.game);
+  const load = useCallback(
+    (state: GameState) => {
+      commit(state);
       setBoardEpoch((e) => e + 1);
-    }
-    setBest((b) => Math.max(b, persisted.best));
-    setSettings(persisted.settings);
-    setHydrated(true);
-  });
+      setLastResult(null);
+    },
+    [commit],
+  );
 
   const place = useCallback(
     (trayIndex: number, pieceId: number, row: number, col: number): MoveOutcome => {
@@ -58,45 +56,21 @@ export function useGameController(): GameController {
       if (out.ok) {
         commit(out.state);
         setLastResult(out.result);
-        setBest((b) => Math.max(b, out.state.score));
+        onMoveRef.current?.(out.result, out.state);
       }
       return out;
     },
-    [commit],
+    [commit, onMoveRef],
   );
 
-  const restart = useCallback(() => {
-    commit(createInitialState());
-    setBoardEpoch((e) => e + 1);
-    setLastResult(null);
-  }, [commit]);
+  const restart = useCallback(() => load(makeInitialRef.current()), [load, makeInitialRef]);
 
   const undo = useCallback(() => {
     const current = gameRef.current;
     if (!canUndo(current)) return false;
-    commit(undoMove(current));
-    setBoardEpoch((e) => e + 1);
-    setLastResult(null);
+    load(undoMove(current));
     return true;
-  }, [commit]);
+  }, [load]);
 
-  const updateSettings = useCallback((patch: Partial<Settings>) => {
-    setSettings((s) => ({ ...s, ...patch }));
-  }, []);
-
-  useAutoSave(hydrated, game, best, settings);
-
-  return {
-    hydrated,
-    game,
-    best,
-    settings,
-    boardEpoch,
-    lastResult,
-    place,
-    restart,
-    undo,
-    canUndo: canUndo(game),
-    updateSettings,
-  };
+  return { game, boardEpoch, lastResult, place, restart, undo, canUndo: canUndo(game), load };
 }

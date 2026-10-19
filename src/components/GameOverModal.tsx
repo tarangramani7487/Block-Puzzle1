@@ -13,11 +13,13 @@ interface Props {
   score: number;
   best: number;
   isNewBest: boolean;
+  bestLabel?: string;
+  replayLabel?: string;
   onReplay: () => void;
   onHome: () => void;
 }
 
-export function GameOverModal({ score, best, isNewBest, onReplay, onHome }: Props) {
+export function GameOverModal({ score, best, isNewBest, bestLabel = 'BEST', replayLabel = 'Play again', onReplay, onHome }: Props) {
   const shown = useAnimatedNumber(score, 900);
   return (
     <ModalCard title="No more moves">
@@ -32,10 +34,12 @@ export function GameOverModal({ score, best, isNewBest, onReplay, onHome }: Prop
         <Text style={styles.score}>{shown.toLocaleString()}</Text>
         <View style={styles.bestRow}>
           <Icon name="crown" size={14} color={colors.gold} />
-          <Text style={styles.best}>BEST {best.toLocaleString()}</Text>
+          <Text style={styles.best}>
+            {bestLabel} {best.toLocaleString()}
+          </Text>
         </View>
       </View>
-      <GameButton label="Play again" icon="restart" variant="gold" onPress={onReplay} />
+      <GameButton label={replayLabel} icon="restart" variant="gold" onPress={onReplay} />
       <GameButton label="Home" icon="home" variant="ghost" onPress={onHome} />
     </ModalCard>
   );

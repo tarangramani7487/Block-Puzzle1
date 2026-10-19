@@ -8,7 +8,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { levelColor } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { themeLevel } from '../theme/themes';
 import { GameBlock } from './GameBlock';
 
 interface Props {
@@ -31,6 +32,7 @@ export const BoardCell = memo(function BoardCell({ level, size, left, top, epoch
   const prevEpoch = useRef(epoch);
   const scale = useSharedValue(1);
   const glow = useSharedValue(0);
+  const theme = useTheme();
 
   useEffect(() => {
     const before = prev.current;
@@ -50,7 +52,7 @@ export const BoardCell = memo(function BoardCell({ level, size, left, top, epoch
   const glowStyle = useAnimatedStyle(() => ({ opacity: glow.value, transform: [{ scale: 1 + glow.value * 0.35 }] }));
 
   if (level === 0) return null;
-  const palette = levelColor(level);
+  const palette = themeLevel(theme, level);
   return (
     <Animated.View style={[styles.cell, { left, top, width: size, height: size }, blockStyle]}>
       <Animated.View

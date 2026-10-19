@@ -21,6 +21,8 @@ export default function RootLayout() {
           >
             <Stack.Screen name="index" />
             <Stack.Screen name="game" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="daily" />
+            <Stack.Screen name="shop" />
           </Stack>
         </GameProvider>
       </SafeAreaProvider>

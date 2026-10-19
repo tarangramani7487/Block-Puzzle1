@@ -1,7 +1,8 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { levelColor } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { themeLevel } from '../theme/themes';
 
 interface Props {
   size: number;
@@ -18,7 +19,7 @@ interface Props {
  * plus a soft highlight on the face.
  */
 export const GameBlock = memo(function GameBlock({ size, level, glow }: Props) {
-  const p = levelColor(level);
+  const p = themeLevel(useTheme(), level);
   const bevel = Math.max(2, Math.round(size * 0.17));
   const radius = Math.max(2, size * 0.08);
 

@@ -21,12 +21,14 @@ interface Props {
   best: number;
   combo: number;
   compact?: boolean;
+  /** Daily puzzle: show the target score instead of the best score. */
+  target?: number;
   /** Button shown on the right (pause). */
   right?: ReactNode;
 }
 
 /** Arcade header: trophy + best on the left, score pill in the middle, action on the right. */
-export const ScoreHeader = memo(function ScoreHeader({ score, best, combo, compact, right }: Props) {
+export const ScoreHeader = memo(function ScoreHeader({ score, best, combo, compact, target, right }: Props) {
   const shown = useAnimatedNumber(score);
   const bump = useSharedValue(1);
 
@@ -35,15 +37,15 @@ export const ScoreHeader = memo(function ScoreHeader({ score, best, combo, compa
   }, [score, bump]);
 
   const scoreStyle = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }] }));
-  const isBest = score > 0 && score >= best;
+  const isBest = target === undefined ? score > 0 && score >= best : score >= target;
 
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
         <View style={[styles.side, styles.bestRow]}>
-          <Icon name="trophy" size={26} color={colors.gold} />
+          <Icon name={target === undefined ? 'trophy' : 'target'} size={26} color={colors.gold} />
           <Text style={styles.bestText} numberOfLines={1}>
-            {Math.max(best, score).toLocaleString()}
+            {(target ?? Math.max(best, score)).toLocaleString()}
           </Text>
         </View>
         <View style={styles.pill}>

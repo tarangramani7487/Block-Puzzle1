@@ -1,14 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { BOARD_SIZE, MAX_LEVEL, TRAY_SIZE, UNDOS_PER_GAME } from '../game/constants';
+import { createRewards, dailyGoals, GOALS_PER_DAY, type Goal, type RewardsState } from '../game/daily';
 import { isGameOver } from '../game/gameOver';
 import { isKnownShape } from '../game/shapes';
 import type { Board, GameSnapshot, GameState, Piece, Tray } from '../game/types';
+import { DEFAULT_THEME_ID, isKnownTheme } from '../theme/themes';
 
 export const STORAGE_KEYS = {
   best: 'blockfusion:best',
   settings: 'blockfusion:settings',
   game: 'blockfusion:game',
+  rewards: 'blockfusion:rewards',
+  dailyGame: 'blockfusion:daily-game',
 } as const;
 
 export interface Settings {
@@ -104,6 +108,72 @@ export function serializeGame(state: GameState): string {
   return JSON.stringify(state);
 }
 
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const isDay = (v: unknown): v is string => typeof v === 'string' && DAY_RE.test(v);
+
+/**
+ * Validates saved rewards. Coins, streak and themes survive partial
+ * corruption; goals must match the stored day's generated set.
+ */
+export function parseRewards(raw: string | null, today: string): RewardsState {
+  const fallback = createRewards(today);
+  if (!raw) return fallback;
+  let d: Record<string, unknown>;
+  try {
+    d = JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+  if (typeof d !== 'object' || d === null || d.version !== 1) return fallback;
+
+  const owned = Array.isArray(d.ownedThemes) ? d.ownedThemes.filter(isKnownTheme) : [];
+  const ownedThemes = [...new Set([DEFAULT_THEME_ID, ...owned])];
+  const activeTheme = isKnownTheme(d.activeTheme) && ownedThemes.includes(d.activeTheme) ? d.activeTheme : DEFAULT_THEME_ID;
+
+  let daily = fallback.daily;
+  const dd = d.daily as Record<string, unknown> | undefined;
+  if (dd && isDay(dd.day) && Array.isArray(dd.goals) && dd.goals.length === GOALS_PER_DAY) {
+    const expected = dailyGoals(dd.day);
+    const goals: Goal[] = [];
+    for (let i = 0; i < GOALS_PER_DAY; i++) {
+      const g = dd.goals[i] as Record<string, unknown>;
+      const e = expected[i];
+      if (!g || g.kind !== e.kind || g.target !== e.target) break;
+      goals.push({ ...e, progress: isInt(g.progress, 0, e.target) ? g.progress : 0, claimed: g.claimed === true });
+    }
+    if (goals.length === GOALS_PER_DAY) {
+      daily = { day: dd.day, goals, puzzleSolved: dd.puzzleSolved === true, puzzleClaimed: dd.puzzleClaimed === true };
+    }
+  }
+
+  return {
+    version: 1,
+    coins: isInt(d.coins) ? d.coins : 0,
+    ownedThemes,
+    activeTheme,
+    streak: isInt(d.streak) ? d.streak : 0,
+    lastLoginDay: isDay(d.lastLoginDay) ? d.lastLoginDay : null,
+    daily,
+  };
+}
+
+export interface SavedDailyGame {
+  day: string;
+  game: GameState;
+}
+
+export function parseDailyGame(raw: string | null): SavedDailyGame | null {
+  if (!raw) return null;
+  try {
+    const d = JSON.parse(raw) as Record<string, unknown>;
+    if (!isDay(d?.day)) return null;
+    const game = parseSavedGame(JSON.stringify(d.game));
+    return game ? { day: d.day, game } : null;
+  } catch {
+    return null;
+  }
+}
+
 export function parseSettings(raw: string | null): Settings {
   if (!raw) return { ...DEFAULT_SETTINGS };
   try {
@@ -145,24 +215,41 @@ export interface PersistedData {
   best: number;
   settings: Settings;
   game: GameState | null;
+  rewards: RewardsState;
+  dailyGame: SavedDailyGame | null;
 }
 
-export async function loadAll(): Promise<PersistedData> {
-  const [best, settings, game] = await Promise.all([
+export async function loadAll(today: string): Promise<PersistedData> {
+  const [best, settings, game, rewards, dailyGame] = await Promise.all([
     safeGet(STORAGE_KEYS.best),
     safeGet(STORAGE_KEYS.settings),
     safeGet(STORAGE_KEYS.game),
+    safeGet(STORAGE_KEYS.rewards),
+    safeGet(STORAGE_KEYS.dailyGame),
   ]);
-  return { best: parseBest(best), settings: parseSettings(settings), game: parseSavedGame(game) };
+  return {
+    best: parseBest(best),
+    settings: parseSettings(settings),
+    game: parseSavedGame(game),
+    rewards: parseRewards(rewards, today),
+    dailyGame: parseDailyGame(dailyGame),
+  };
 }
 
 export const saveBest = (best: number) => safeSet(STORAGE_KEYS.best, String(best));
 export const saveSettings = (s: Settings) => safeSet(STORAGE_KEYS.settings, JSON.stringify(s));
 export const saveGame = (state: GameState) => safeSet(STORAGE_KEYS.game, serializeGame(state));
-export async function clearSavedGame(): Promise<void> {
+export const saveRewards = (r: RewardsState) => safeSet(STORAGE_KEYS.rewards, JSON.stringify(r));
+export const saveDailyGame = (day: string, game: GameState) =>
+  safeSet(STORAGE_KEYS.dailyGame, JSON.stringify({ day, game }));
+
+async function safeRemove(key: string): Promise<void> {
   try {
-    await AsyncStorage.removeItem(STORAGE_KEYS.game);
+    await AsyncStorage.removeItem(key);
   } catch (e) {
-    console.warn('storage remove failed', e);
+    console.warn('storage remove failed', key, e);
   }
 }
+
+export const clearSavedGame = () => safeRemove(STORAGE_KEYS.game);
+export const clearDailyGame = () => safeRemove(STORAGE_KEYS.dailyGame);

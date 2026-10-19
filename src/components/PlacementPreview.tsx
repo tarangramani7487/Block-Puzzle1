@@ -4,7 +4,9 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { BOARD_SIZE } from '../game/constants';
 import { getShape } from '../game/shapes';
-import { colors, levelColor } from '../theme/colors';
+import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { themeLevel } from '../theme/themes';
 import type { BoardGeometry } from './GameBoard';
 
 export interface PreviewState {
@@ -29,7 +31,7 @@ interface Props {
  */
 export const PlacementPreview = memo(function PlacementPreview({ preview, geo }: Props) {
   const shape = getShape(preview.shapeId);
-  const palette = levelColor(preview.level);
+  const palette = themeLevel(useTheme(), preview.level);
   const span = geo.pitch * BOARD_SIZE;
   const outline = preview.valid ? palette.light : colors.invalid;
 

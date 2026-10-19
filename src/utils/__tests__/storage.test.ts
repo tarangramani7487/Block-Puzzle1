@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { buyTheme, claimLogin, createDailyPuzzle, createRewards } from '../../game/daily';
 import { applyMove, createInitialState } from '../../game/gameEngine';
 import {
   DEFAULT_SETTINGS,
@@ -7,6 +8,10 @@ import {
   clearSavedGame,
   loadAll,
   parseBest,
+  parseDailyGame,
+  parseRewards,
+  saveDailyGame,
+  saveRewards,
   parseSavedGame,
   parseSettings,
   saveBest,
@@ -19,6 +24,8 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
+
+const DAY = '2026-10-15';
 
 function playedState() {
   const out = applyMove(createInitialState(11), 0, 0, 0);
@@ -39,16 +46,22 @@ describe('save / restore', () => {
     await saveBest(1234);
     await saveSettings({ sound: false, haptics: true });
     await saveGame(state);
-    const loaded = await loadAll();
+    const loaded = await loadAll(DAY);
     expect(loaded.best).toBe(1234);
     expect(loaded.settings).toEqual({ sound: false, haptics: true });
     expect(loaded.game).toEqual(state);
     await clearSavedGame();
-    expect((await loadAll()).game).toBeNull();
+    expect((await loadAll(DAY)).game).toBeNull();
   });
 
   it('falls back to defaults when nothing is saved', async () => {
-    expect(await loadAll()).toEqual({ best: 0, settings: DEFAULT_SETTINGS, game: null });
+    expect(await loadAll(DAY)).toEqual({
+      best: 0,
+      settings: DEFAULT_SETTINGS,
+      game: null,
+      rewards: createRewards(DAY),
+      dailyGame: null,
+    });
   });
 
   it('rejects corrupt or invalid saved games', () => {
@@ -84,6 +97,33 @@ describe('save / restore', () => {
 
   it('survives a corrupt stored value', async () => {
     await AsyncStorage.setItem(STORAGE_KEYS.game, '{"version":1,"board":"x"}');
-    expect((await loadAll()).game).toBeNull();
+    expect((await loadAll(DAY)).game).toBeNull();
+  });
+
+  it('round-trips rewards and the daily puzzle game', async () => {
+    const rewards = buyTheme({ ...claimLogin(createRewards(DAY), DAY), coins: 400 }, 'candy');
+    const puzzle = createDailyPuzzle(DAY).state;
+    const out = applyMove(puzzle, 0, 0, 0);
+    const daily = out.ok ? out.state : puzzle;
+    await saveRewards(rewards);
+    await saveDailyGame(DAY, daily);
+    const loaded = await loadAll(DAY);
+    expect(loaded.rewards).toEqual(rewards);
+    expect(loaded.dailyGame).toEqual({ day: DAY, game: daily });
+  });
+
+  it('repairs corrupt rewards without losing valid fields', () => {
+    const good = JSON.parse(JSON.stringify({ ...createRewards(DAY), coins: 77, ownedThemes: ['jewel', 'neon'] }));
+    expect(parseRewards('nope', DAY)).toEqual(createRewards(DAY));
+    const r = parseRewards(JSON.stringify({ ...good, activeTheme: 'missing', ownedThemes: ['neon', 'fake'], streak: -1 }), DAY);
+    expect(r.coins).toBe(77);
+    expect(r.ownedThemes).toEqual(['jewel', 'neon']);
+    expect(r.activeTheme).toBe('jewel');
+    expect(r.streak).toBe(0);
+    // Tampered goals are replaced by the real set for the day.
+    const tampered = structuredClone(good);
+    tampered.daily.goals[0].target = 1;
+    expect(parseRewards(JSON.stringify(tampered), DAY).daily).toEqual(createRewards(DAY).daily);
+    expect(parseDailyGame('{"day":"x","game":{}}')).toBeNull();
   });
 });

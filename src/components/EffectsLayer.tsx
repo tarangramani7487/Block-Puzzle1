@@ -12,7 +12,9 @@ import Animated, {
 
 import { BOARD_SIZE } from '../game/constants';
 import type { MoveResult } from '../game/types';
-import { colors, levelColor } from '../theme/colors';
+import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { themeLevel, type Theme } from '../theme/themes';
 import { typography } from '../theme/typography';
 import type { BoardGeometry } from './GameBoard';
 import { GameBlock } from './GameBlock';
@@ -128,7 +130,7 @@ const ParticleBurst = memo(function ParticleBurst({
   useEffect(() => {
     progress.value = withDelay(delay, withTiming(1, { duration: big ? 800 : 620, easing: Easing.out(Easing.quad) }));
   }, [progress, big, delay]);
-  const palette = levelColor(level);
+  const palette = themeLevel(useTheme(), level);
   const perCell = big ? 5 : 3;
   const particles = [];
   const chosen = cells.slice(0, MAX_PARTICLE_CELLS);
@@ -194,7 +196,7 @@ const Toast = memo(function Toast({ title, subtitle, color, geo }: { title: stri
 });
 
 /** Picks a single headline per move so feedback never piles up. */
-function headline(result: MoveResult): { title: string; subtitle?: string; color: string } | null {
+function headline(result: MoveResult, theme: Theme): { title: string; subtitle?: string; color: string } | null {
   const lines = result.clearedRows.length + result.clearedCols.length;
   const chain = result.fusionSteps.reduce((m, s) => Math.max(m, s.chainIndex), 0);
   const burst = result.fusionSteps.some((s) => s.toLevel === null);
@@ -202,7 +204,7 @@ function headline(result: MoveResult): { title: string; subtitle?: string; color
   if (result.combo >= 2 && lines > 0) return { title: `COMBO ×${result.combo}`, subtitle: lines > 1 ? `${lines} lines` : undefined, color: colors.gold };
   if (lines >= 2) return { title: ['', '', 'DOUBLE!', 'TRIPLE!', 'QUAD!'][lines] ?? 'MEGA!', color: '#7CF3FF' };
   if (burst) return { title: 'SUPERNOVA!', subtitle: 'Max fusion burst', color: '#E8B0FF' };
-  if (chain >= 2) return { title: `FUSION ×${chain}`, color: levelColor(result.fusionSteps[result.fusionSteps.length - 1].toLevel ?? 6).light };
+  if (chain >= 2) return { title: `FUSION ×${chain}`, color: themeLevel(theme, result.fusionSteps[result.fusionSteps.length - 1].toLevel ?? 6).light };
   return null;
 }
 
@@ -211,7 +213,7 @@ function headline(result: MoveResult): { title: string; subtitle?: string; color
 const MoveEffects = memo(function MoveEffects({ result, geo }: { result: MoveResult; geo: BoardGeometry }) {
   const cx = result.placedCells.reduce((s, [, c]) => s + c, 0) / result.placedCells.length;
   const cy = result.placedCells.reduce((s, [r]) => s + r, 0) / result.placedCells.length;
-  const msg = headline(result);
+  const msg = headline(result, useTheme());
   const lineTotal = result.score.lines + result.score.fusion + result.score.perfectClear;
 
   return (

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Block Fusion",
+    "name": "Block Puzzle",
     "slug": "block-fusion",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,7 +8,7 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.blockfusion.game"
+      "bundleIdentifier": "com.block.puzzle"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.blockfusion.game",
+      "package": "com.block.puzzle",
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ]

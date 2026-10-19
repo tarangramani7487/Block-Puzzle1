@@ -1,12 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
+import type { RewardsState } from '../game/daily';
 import type { GameState } from '../game/types';
 import {
+  clearDailyGame,
   clearSavedGame,
-  DEFAULT_SETTINGS,
   loadAll,
   saveBest,
+  saveDailyGame,
   saveGame,
+  saveRewards,
   saveSettings,
   type PersistedData,
   type Settings,
@@ -14,44 +17,57 @@ import {
 import { useLatest } from './useLatest';
 
 /** Loads persisted data once on mount and hands it to `onLoaded`. */
-export function useLoadPersisted(onLoaded: (data: PersistedData) => void) {
+export function useLoadPersisted(today: string, onLoaded: (data: PersistedData) => void) {
   const callback = useLatest(onLoaded);
+  const day = useRef(today);
   useEffect(() => {
     let alive = true;
-    loadAll()
-      .catch((): PersistedData => ({ best: 0, settings: { ...DEFAULT_SETTINGS }, game: null }))
-      .then((d) => {
-        if (alive) callback.current(d);
-      });
+    loadAll(day.current).then((d) => {
+      if (alive) callback.current(d);
+    });
     return () => {
       alive = false;
     };
   }, [callback]);
 }
 
-/**
- * Writes changes back to storage after hydration. Games that are over are
- * removed so the next launch starts fresh.
- */
-export function useAutoSave(hydrated: boolean, game: GameState, best: number, settings: Settings) {
+/** Runs `effect` on changes after hydration, skipping the run that only reflects what was just loaded. */
+function useSaveEffect(hydrated: boolean, effect: () => void, deps: unknown[]) {
   const skipFirst = useRef(true);
-
+  const run = useLatest(effect);
   useEffect(() => {
     if (!hydrated) return;
-    // The first run after hydration only reflects what was just loaded.
     if (skipFirst.current) {
       skipFirst.current = false;
       return;
     }
-    if (game.gameOver || game.moveCount === 0) clearSavedGame();
-    else saveGame(game);
-  }, [hydrated, game]);
+    run.current();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, run, ...deps]);
+}
 
-  useEffect(() => {
-    if (hydrated) saveBest(best);
-  }, [hydrated, best]);
+interface AutoSaveData {
+  game: GameState;
+  /** Day the daily board belongs to (read at save time). */
+  dailyDay: RefObject<string>;
+  dailyGame: GameState;
+  best: number;
+  settings: Settings;
+  rewards: RewardsState;
+}
 
-  useEffect(() => {
-    if (hydrated) saveSettings(settings);
-  }, [hydrated, settings]);
+/**
+ * Writes changes back to storage after hydration. Finished or untouched games
+ * are removed so the next launch starts fresh.
+ */
+export function useAutoSave(hydrated: boolean, d: AutoSaveData) {
+  useSaveEffect(hydrated, () => (d.game.gameOver || d.game.moveCount === 0 ? clearSavedGame() : saveGame(d.game)), [d.game]);
+  useSaveEffect(
+    hydrated,
+    () => (d.dailyGame.gameOver || d.dailyGame.moveCount === 0 ? clearDailyGame() : saveDailyGame(d.dailyDay.current, d.dailyGame)),
+    [d.dailyGame],
+  );
+  useSaveEffect(hydrated, () => saveBest(d.best), [d.best]);
+  useSaveEffect(hydrated, () => saveSettings(d.settings), [d.settings]);
+  useSaveEffect(hydrated, () => saveRewards(d.rewards), [d.rewards]);
 }

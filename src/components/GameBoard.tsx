@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BOARD_SIZE } from '../game/constants';
 import type { Board } from '../game/types';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 import { CELL_GAP_RATIO } from '../theme/spacing';
 import { BoardCell } from './BoardCell';
 
@@ -30,11 +30,12 @@ export function boardGeometry(size: number): BoardGeometry {
 /** Neon grid lines between cells (the outer edge is drawn by the frame). */
 const GridLines = memo(function GridLines({ geo }: { geo: BoardGeometry }) {
   const span = geo.pitch * BOARD_SIZE;
+  const { gridLine } = useTheme();
   const lines = [];
   for (let i = 1; i < BOARD_SIZE; i++) {
     const at = Math.round(i * geo.pitch) - 0.5;
-    lines.push(<View key={`h${i}`} style={[styles.line, { top: at, left: 0, width: span, height: 1 }]} />);
-    lines.push(<View key={`v${i}`} style={[styles.line, { left: at, top: 0, height: span, width: 1 }]} />);
+    lines.push(<View key={`h${i}`} style={[styles.line, { top: at, left: 0, width: span, height: 1, backgroundColor: gridLine }]} />);
+    lines.push(<View key={`v${i}`} style={[styles.line, { left: at, top: 0, height: span, width: 1, backgroundColor: gridLine }]} />);
   }
   return <>{lines}</>;
 });
@@ -71,8 +72,20 @@ interface Props {
 }
 
 export const GameBoard = memo(function GameBoard({ board, geo, epoch, gridRef, onGridLayout, children }: Props) {
+  const theme = useTheme();
   return (
-    <View style={[styles.frame, { width: geo.size, height: geo.size }]}>
+    <View
+      style={[
+        styles.frame,
+        {
+          width: geo.size,
+          height: geo.size,
+          backgroundColor: theme.board,
+          borderColor: theme.boardBorder,
+          boxShadow: `0 0 18px 2px ${theme.gridLine}`,
+        },
+      ]}
+    >
       <View
         ref={gridRef}
         onLayout={onGridLayout}
@@ -94,12 +107,6 @@ export const GameBoard = memo(function GameBoard({ board, geo, epoch, gridRef, o
 });
 
 const styles = StyleSheet.create({
-  frame: {
-    backgroundColor: colors.board,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: colors.boardBorder,
-    boxShadow: '0 0 18px 2px rgba(47,180,255,0.35)',
-  },
-  line: { position: 'absolute', backgroundColor: colors.gridLine },
+  frame: { borderRadius: 4, borderWidth: 2 },
+  line: { position: 'absolute' },
 });

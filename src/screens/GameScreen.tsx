@@ -1,19 +1,22 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BlockTray } from '../components/BlockTray';
-import { IconButton } from '../components/Buttons';
+import { GameButton, IconButton } from '../components/Buttons';
 import { DragLayer } from '../components/DragLayer';
 import { EffectsLayer } from '../components/EffectsLayer';
 import { boardGeometry, GameBoard } from '../components/GameBoard';
 import { GameOverModal } from '../components/GameOverModal';
+import { Icon } from '../components/Icon';
+import { ModalCard } from '../components/ModalCard';
 import { PlacementPreview, type PreviewState } from '../components/PlacementPreview';
 import { Sparkles } from '../components/Sparkles';
 import { ScoreHeader } from '../components/ScoreHeader';
 import { SettingsModal } from '../components/SettingsModal';
+import { PUZZLE_REWARD } from '../game/daily';
 import { findFullLines } from '../game/lineClearing';
 import { canPlace, placeShape } from '../game/placement';
 import { getShape } from '../game/shapes';
@@ -21,11 +24,13 @@ import { useGame } from '../hooks/GameProvider';
 import { useLatest } from '../hooks/useLatest';
 import { decodeTarget, NO_TARGET, useDragDrop } from '../hooks/useDragDrop';
 import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
+import { radius, spacing } from '../theme/spacing';
+import { typography } from '../theme/typography';
 
-type Overlay = null | 'pause' | 'confirm-restart' | 'game-over';
+type Overlay = null | 'pause' | 'confirm-restart' | 'game-over' | 'solved';
 
 const GAME_OVER_DELAY_MS = 900;
+const SOLVED_DELAY_MS = 600;
 const MAX_BOARD = 560;
 const TICK_MIN_INTERVAL_MS = 45;
 
@@ -33,7 +38,12 @@ export function GameScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const window = useWindowDimensions();
-  const { game, best, settings, boardEpoch, lastResult, place, restart, undo, canUndo, updateSettings, feedback } = useGame();
+  const params = useLocalSearchParams<{ mode?: string }>();
+  const isDaily = params.mode === 'daily';
+  const ctx = useGame();
+  const { best, settings, updateSettings, feedback, rewards, dailyTarget } = ctx;
+  const { game, boardEpoch, lastResult, place, restart, undo, canUndo } = isDaily ? ctx.daily : ctx.classic;
+  const puzzle = rewards.state.daily;
 
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
@@ -140,7 +150,8 @@ export function GameScreen() {
   useEffect(() => {
     if (!game.gameOver) return;
     const t = setTimeout(() => {
-      setOverlay('game-over');
+      // A just-solved puzzle shows its reward first; game over follows after claiming.
+      setOverlay((o) => (o === 'solved' ? o : 'game-over'));
       feedback.play('gameover');
       feedback.vibrate('gameover');
     }, GAME_OVER_DELAY_MS);
@@ -148,6 +159,24 @@ export function GameScreen() {
     // feedback identity changes with settings; only react to game over itself
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.gameOver]);
+
+  // ---------- daily puzzle solved ----------
+  const solvedPending = isDaily && puzzle.puzzleSolved && !puzzle.puzzleClaimed;
+  useEffect(() => {
+    if (!solvedPending) return;
+    const t = setTimeout(() => {
+      setOverlay('solved');
+      feedback.play('combo');
+      feedback.vibrate('clear');
+    }, SOLVED_DELAY_MS);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [solvedPending]);
+
+  const claimSolved = useCallback(() => {
+    rewards.claimPuzzle();
+    setOverlay(game.gameOver ? 'game-over' : null);
+  }, [rewards, game.gameOver]);
 
   const doRestart = useCallback(() => {
     restart();
@@ -181,6 +210,7 @@ export function GameScreen() {
             best={best}
             combo={game.combo}
             compact={compact}
+            target={isDaily ? dailyTarget : undefined}
             right={<IconButton icon="pause" label="Pause and settings" size={40} plain onPress={() => setOverlay('pause')} />}
           />
         </View>
@@ -242,11 +272,23 @@ export function GameScreen() {
           onRestart={doRestart}
         />
       )}
+      {overlay === 'solved' && (
+        <ModalCard title="Puzzle solved!">
+          <View style={styles.solvedBox}>
+            <Icon name="coin" size={44} color={colors.gold} />
+            <Text style={styles.solvedReward}>+{PUZZLE_REWARD}</Text>
+            <Text style={styles.solvedHint}>Come back tomorrow for a new puzzle.</Text>
+          </View>
+          <GameButton label="Claim" icon="coin" variant="gold" onPress={claimSolved} />
+        </ModalCard>
+      )}
       {overlay === 'game-over' && game.gameOver && (
         <GameOverModal
           score={game.score}
-          best={best}
-          isNewBest={game.score > 0 && game.score >= best}
+          best={isDaily ? dailyTarget : best}
+          bestLabel={isDaily ? 'TARGET' : 'BEST'}
+          replayLabel={isDaily ? 'Try again' : 'Play again'}
+          isNewBest={!isDaily && game.score > 0 && game.score >= best}
           onReplay={doRestart}
           onHome={() => {
             doRestart();
@@ -276,6 +318,15 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
     minHeight: 200,
   },
+  solvedBox: {
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 16,
+    borderRadius: radius.lg,
+    backgroundColor: 'rgba(0,0,0,0.22)',
+  },
+  solvedReward: { ...typography.score, fontSize: 44, color: colors.gold },
+  solvedHint: { ...typography.body, fontSize: 14, color: colors.textDim, textAlign: 'center' },
   controls: {
     width: '100%',
     maxWidth: MAX_BOARD + 40,
