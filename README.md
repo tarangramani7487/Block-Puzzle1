@@ -106,3 +106,4 @@ live in a separate decorative layer driven by the move result and never touch ga
 **Persistence.** Best score, settings and the current game (board, tray, score, combo, RNG state,
 undo snapshot) go to AsyncStorage after every change. Saved data is fully validated on load;
 corrupt or unknown data falls back to defaults.
+# Block-Puzzle
