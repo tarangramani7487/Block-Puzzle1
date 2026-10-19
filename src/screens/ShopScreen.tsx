@@ -73,6 +73,7 @@ export function ShopScreen() {
       </View>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}>
         <Text style={styles.hint}>Earn coins from daily goals, the daily puzzle and your login streak.</Text>
+        
         {THEMES.map((t) => (
           <ThemeCard
             key={t.id}

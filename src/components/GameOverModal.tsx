@@ -1,7 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { ZoomIn } from 'react-native-reanimated';
 
-import { useAnimatedNumber } from '../hooks/useAnimatedNumber';
 import { colors } from '../theme/colors';
 import { radius } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -20,18 +18,17 @@ interface Props {
 }
 
 export function GameOverModal({ score, best, isNewBest, bestLabel = 'BEST', replayLabel = 'Play again', onReplay, onHome }: Props) {
-  const shown = useAnimatedNumber(score, 900);
   return (
     <ModalCard title="No more moves">
       {isNewBest && (
-        <Animated.View entering={ZoomIn.delay(500).springify().damping(10)} style={styles.badge}>
+        <View style={styles.badge}>
           <Icon name="crown" size={16} color="#4A2C00" />
           <Text style={styles.badgeText}>NEW BEST!</Text>
-        </Animated.View>
+        </View>
       )}
       <View style={styles.scoreBox}>
         <Text style={styles.label}>SCORE</Text>
-        <Text style={styles.score}>{shown.toLocaleString()}</Text>
+        <Text style={styles.score}>{score.toLocaleString()}</Text>
         <View style={styles.bestRow}>
           <Icon name="crown" size={14} color={colors.gold} />
           <Text style={styles.best}>

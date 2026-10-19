@@ -1,7 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, type ReactNode } from 'react';
 import { BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 
 import { colors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
@@ -15,8 +14,8 @@ interface Props {
 }
 
 /**
- * In-screen animated overlay. Rendered inside the screen (not a native
- * Modal) so Reanimated transitions and gestures behave consistently.
+ * In-screen overlay, shown and hidden instantly. Rendered inside the screen
+ * (not a native Modal) so gestures behave consistently.
  */
 export function ModalCard({ title, children, onDismiss }: Props) {
   useEffect(() => {
@@ -28,14 +27,14 @@ export function ModalCard({ title, children, onDismiss }: Props) {
   }, [onDismiss]);
 
   return (
-    <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(150)} style={styles.backdrop}>
+    <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onDismiss} accessibilityLabel="Close" />
-      <Animated.View entering={ZoomIn.springify().damping(15)} exiting={ZoomOut.duration(150)} style={styles.card}>
+      <View style={styles.card}>
         <LinearGradient colors={[colors.surfaceRaised, colors.surface]} style={[StyleSheet.absoluteFill, { borderRadius: radius.xl }]} />
         <Text style={styles.title}>{title}</Text>
         <View style={styles.body}>{children}</View>
-      </Animated.View>
-    </Animated.View>
+      </View>
+    </View>
   );
 }
 

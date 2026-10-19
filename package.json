@@ -4,16 +4,23 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-firebase/analytics": "^26.4.0",
+    "@react-native-firebase/app": "^26.4.0",
+    "@react-native-firebase/crashlytics": "^26.4.0",
+    "@react-native-firebase/messaging": "^26.4.0",
     "expo": "~57.0.28",
     "expo-asset": "~57.0.19",
     "expo-audio": "~57.0.5",
+    "expo-build-properties": "~57.0.22",
     "expo-constants": "~57.0.21",
+    "expo-dev-client": "~57.0.20",
     "expo-haptics": "~57.0.3",
     "expo-linear-gradient": "~57.0.2",
     "expo-linking": "~57.0.12",
     "expo-router": "~57.0.26",
     "expo-splash-screen": "~57.0.10",
     "expo-status-bar": "~57.0.1",
+    "firebase": "^13.0.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
@@ -41,7 +48,8 @@
     "web": "expo start --web",
     "test": "jest",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "deploy-hosting": "firebase deploy --only hosting"
   },
   "private": true,
   "jest": {

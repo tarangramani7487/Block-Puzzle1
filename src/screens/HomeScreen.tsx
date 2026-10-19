@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,6 +46,8 @@ export function HomeScreen() {
   const pendingLogin = hydrated && loginPending(rewards.state, today);
   const claimable = claimableCount(rewards.state, today);
   const [showSettings, setShowSettings] = useState(false);
+  // First install only: learn by playing before anything else.
+  const showTutorial = hydrated && !settings.tutorialSeen;
 
   const logoCell = Math.min(64, width * 0.15, height * 0.075);
   const inProgress = game.moveCount > 0 && !game.gameOver;
@@ -58,6 +60,8 @@ export function HomeScreen() {
     restart();
     router.push('/game');
   };
+
+  if (showTutorial) return <Redirect href="/tutorial" />;
 
   return (
     <View style={styles.root}>

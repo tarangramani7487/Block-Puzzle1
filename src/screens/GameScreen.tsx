@@ -12,7 +12,8 @@ import { boardGeometry, GameBoard } from '../components/GameBoard';
 import { GameOverModal } from '../components/GameOverModal';
 import { Icon } from '../components/Icon';
 import { ModalCard } from '../components/ModalCard';
-import { PlacementPreview, type PreviewState } from '../components/PlacementPreview';
+import { NEW_BEST_MS, NewBestBanner } from '../components/NewBestBanner';
+import { PreviewLayer, type PreviewLayerHandle, type PreviewState } from '../components/PlacementPreview';
 import { Sparkles } from '../components/Sparkles';
 import { ScoreHeader } from '../components/ScoreHeader';
 import { SettingsModal } from '../components/SettingsModal';
@@ -26,6 +27,7 @@ import { decodeTarget, NO_TARGET, useDragDrop } from '../hooks/useDragDrop';
 import { colors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import { logGameOver } from '../utils/firebase';
 
 type Overlay = null | 'pause' | 'confirm-restart' | 'game-over' | 'solved';
 
@@ -46,7 +48,13 @@ export function GameScreen() {
   const puzzle = rewards.state.daily;
 
   const [overlay, setOverlay] = useState<Overlay>(null);
-  const [preview, setPreview] = useState<PreviewState | null>(null);
+  // The preview lives in PreviewLayer; the screen only tracks validity for the dragged piece.
+  const previewRef = useRef<PreviewLayerHandle>(null);
+  const [previewInvalid, setPreviewInvalid] = useState(false);
+  const setPreview = useCallback((p: PreviewState | null) => {
+    previewRef.current?.set(p);
+    setPreviewInvalid(p !== null && !p.valid);
+  }, []);
   const [boardArea, setBoardArea] = useState({ width: window.width, height: window.width });
 
   // ---------- responsive geometry ----------
@@ -149,6 +157,7 @@ export function GameScreen() {
   // ---------- game over ----------
   useEffect(() => {
     if (!game.gameOver) return;
+    logGameOver(isDaily ? 'daily' : 'classic', game.score);
     const t = setTimeout(() => {
       // A just-solved puzzle shows its reward first; game over follows after claiming.
       setOverlay((o) => (o === 'solved' ? o : 'game-over'));
@@ -159,6 +168,32 @@ export function GameScreen() {
     // feedback identity changes with settings; only react to game over itself
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.gameOver]);
+
+  // ---------- new best ----------
+  // `best` rises with the score as you play, so compare against the record from before this game.
+  const bestAtStart = useRef(best);
+  const celebrated = useRef(game.score > 0 && game.score >= best);
+  const [newBest, setNewBest] = useState<{ key: number; score: number } | null>(null);
+  useEffect(() => {
+    if (isDaily) return;
+    if (game.moveCount === 0) {
+      bestAtStart.current = best;
+      celebrated.current = false;
+      return;
+    }
+    if (celebrated.current || bestAtStart.current === 0 || game.score <= bestAtStart.current) return;
+    celebrated.current = true;
+    setNewBest({ key: Date.now(), score: game.score });
+    feedback.play('combo');
+    feedback.vibrate('clear');
+    // feedback identity changes with settings; only react to the score itself
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.score, game.moveCount]);
+  useEffect(() => {
+    if (!newBest) return;
+    const t = setTimeout(() => setNewBest(null), NEW_BEST_MS);
+    return () => clearTimeout(t);
+  }, [newBest]);
 
   // ---------- daily puzzle solved ----------
   const solvedPending = isDaily && puzzle.puzzleSolved && !puzzle.puzzleClaimed;
@@ -182,7 +217,7 @@ export function GameScreen() {
     restart();
     setPreview(null);
     setOverlay(null);
-  }, [restart]);
+  }, [restart, setPreview]);
 
   const goHome = useCallback(() => {
     setOverlay(null);
@@ -194,6 +229,11 @@ export function GameScreen() {
     const { width, height } = e.nativeEvent.layout;
     setBoardArea((a) => (a.width === width && a.height === height ? a : { width, height }));
   }, []);
+
+  const pauseButton = useMemo(
+    () => <IconButton icon="pause" label="Pause and settings" size={40} plain onPress={() => setOverlay('pause')} />,
+    [],
+  );
 
   const draggedPiece = dragSlot !== null ? game.tray[dragSlot] : null;
 
@@ -211,7 +251,7 @@ export function GameScreen() {
             combo={game.combo}
             compact={compact}
             target={isDaily ? dailyTarget : undefined}
-            right={<IconButton icon="pause" label="Pause and settings" size={40} plain onPress={() => setOverlay('pause')} />}
+            right={pauseButton}
           />
         </View>
       </View>
@@ -219,8 +259,9 @@ export function GameScreen() {
       <View style={[styles.content, { paddingBottom: insets.bottom + spacing.sm, paddingLeft: insets.left + sidePad, paddingRight: insets.right + sidePad }]}>
         <View style={styles.boardArea} onLayout={onBoardAreaLayout}>
           <GameBoard board={game.board} geo={geo} epoch={boardEpoch} gridRef={gridRef} onGridLayout={measure}>
-            {preview && <PlacementPreview preview={preview} geo={geo} />}
+            <PreviewLayer ref={previewRef} geo={geo} />
             <EffectsLayer result={lastResult} geo={geo} />
+            {newBest && <NewBestBanner key={newBest.key} geo={geo} score={newBest.score} />}
           </GameBoard>
         </View>
 
@@ -250,7 +291,7 @@ export function GameScreen() {
         </View>
       </View>
 
-      <DragLayer piece={draggedPiece} pitch={geo.pitch} drag={shared} invalid={preview !== null && !preview.valid} />
+      <DragLayer piece={draggedPiece} pitch={geo.pitch} drag={shared} invalid={previewInvalid} />
 
       {overlay === 'pause' && (
         <SettingsModal

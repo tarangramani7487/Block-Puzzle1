@@ -44,11 +44,11 @@ describe('save / restore', () => {
   it('persists and restores best score, settings and game through AsyncStorage', async () => {
     const state = playedState();
     await saveBest(1234);
-    await saveSettings({ sound: false, haptics: true });
+    await saveSettings({ sound: false, haptics: true, tutorialSeen: true });
     await saveGame(state);
     const loaded = await loadAll(DAY);
     expect(loaded.best).toBe(1234);
-    expect(loaded.settings).toEqual({ sound: false, haptics: true });
+    expect(loaded.settings).toEqual({ sound: false, haptics: true, tutorialSeen: true });
     expect(loaded.game).toEqual(state);
     await clearSavedGame();
     expect((await loadAll(DAY)).game).toBeNull();
@@ -88,7 +88,9 @@ describe('save / restore', () => {
   });
 
   it('parses settings and best score defensively', () => {
-    expect(parseSettings('{"sound":"yes","haptics":false}')).toEqual({ sound: true, haptics: false });
+    expect(parseSettings('{"sound":"yes","haptics":false}')).toEqual({ sound: true, haptics: false, tutorialSeen: true });
+    expect(parseSettings('{"sound":true,"haptics":true,"tutorialSeen":false}').tutorialSeen).toBe(false);
+    expect(parseSettings(null).tutorialSeen).toBe(false);
     expect(parseSettings('{{')).toEqual(DEFAULT_SETTINGS);
     expect(parseBest('abc')).toBe(0);
     expect(parseBest('-3')).toBe(0);

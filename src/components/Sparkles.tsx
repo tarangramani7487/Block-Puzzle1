@@ -11,7 +11,7 @@ import Animated, {
 
 import { colors } from '../theme/colors';
 
-const COUNT = 26;
+const COUNT = 18;
 
 /** Deterministic pseudo-random in [0,1). */
 const hash = (n: number) => {
@@ -32,11 +32,12 @@ const Dot = memo(function Dot({ left, top, size, delay, duration }: (typeof DOTS
   useEffect(() => {
     t.value = withDelay(delay, withRepeat(withTiming(1, { duration, easing: Easing.inOut(Easing.sin) }), -1, true));
   }, [t, delay, duration]);
-  const style = useAnimatedStyle(() => ({ opacity: 0.15 + t.value * 0.75, transform: [{ scale: 0.6 + t.value * 0.6 }] }));
+  // Opacity only: animating scale would re-rasterise every star each frame.
+  const style = useAnimatedStyle(() => ({ opacity: 0.15 + t.value * 0.75 }));
   return (
     <View style={[styles.pos, { left, top }]}>
       <Animated.View
-        style={[styles.dot, { width: size, height: size, borderRadius: size, boxShadow: `0 0 ${size * 2}px ${colors.sparkle}` }, style]}
+        style={[styles.dot, { width: size, height: size, borderRadius: size }, style]}
       />
     </View>
   );

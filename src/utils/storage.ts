@@ -18,9 +18,11 @@ export const STORAGE_KEYS = {
 export interface Settings {
   sound: boolean;
   haptics: boolean;
+  /** First-launch how-to-play guide has been shown. */
+  tutorialSeen: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { sound: true, haptics: true };
+export const DEFAULT_SETTINGS: Settings = { sound: true, haptics: true, tutorialSeen: false };
 
 // ---------- validation (pure, never throws) ----------
 
@@ -181,6 +183,8 @@ export function parseSettings(raw: string | null): Settings {
     return {
       sound: typeof d?.sound === 'boolean' ? d.sound : DEFAULT_SETTINGS.sound,
       haptics: typeof d?.haptics === 'boolean' ? d.haptics : DEFAULT_SETTINGS.haptics,
+      // Settings saved before this flag existed belong to players who already know the game.
+      tutorialSeen: typeof d?.tutorialSeen === 'boolean' ? d.tutorialSeen : true,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

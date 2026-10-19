@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useImperativeHandle, useState, type Ref } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -78,6 +78,20 @@ export const PlacementPreview = memo(function PlacementPreview({ preview, geo }:
       })}
     </View>
   );
+});
+
+export interface PreviewLayerHandle {
+  set: (preview: PreviewState | null) => void;
+}
+
+/**
+ * Owns the preview state so drag steps re-render only this layer,
+ * not the whole game screen.
+ */
+export const PreviewLayer = memo(function PreviewLayer({ geo, ref }: { geo: BoardGeometry; ref: Ref<PreviewLayerHandle> }) {
+  const [preview, setPreview] = useState<PreviewState | null>(null);
+  useImperativeHandle(ref, () => ({ set: setPreview }), []);
+  return preview && <PlacementPreview preview={preview} geo={geo} />;
 });
 
 const styles = StyleSheet.create({
