@@ -28,3 +28,4 @@ export function logGameOver(mode: GameMode, score: number) {
 
 // Crashlytics has no web SDK.
 export function logError(_e: Error) {}
+export function setupCrashlytics() {}

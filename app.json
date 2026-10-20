@@ -1,18 +1,21 @@
 {
   "expo": {
     "name": "Block Puzzle",
-    "slug": "block-fusion",
+    "slug": "block-puzzle",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/store/logo.png",
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.block.puzzle",
+      "bundleIdentifier": "com.game.block.puzzle",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": [
+          "remote-notification",
           "remote-notification"
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
         "aps-environment": "production"
@@ -21,18 +24,17 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#14112B",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/store/logo.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.block.puzzle",
+      "package": "com.game.block.puzzle",
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ],
       "googleServicesFile": "./google-services.json",
       "permissions": [
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
     },
     "web": {
@@ -52,13 +54,20 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 180,
+          "image": "./assets/store/logo.png",
+          "imageWidth": 220,
           "resizeMode": "contain",
           "backgroundColor": "#14112B"
         }
       ],
-      "@react-native-firebase/app",
+      [
+        "@react-native-firebase/app",
+        {
+          "ios": {
+            "disableSPM": true
+          }
+        }
+      ],
       "@react-native-firebase/analytics",
       "@react-native-firebase/crashlytics",
       [
@@ -72,6 +81,13 @@
       "@react-native-firebase/messaging"
     ],
     "backgroundColor": "#14112B",
-    "scheme": "blockfusion"
+    "scheme": "blockfusion",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "845c7b95-36dc-4f7d-898b-edc1d1ca780f"
+      }
+    },
+    "owner": "devharshramani"
   }
 }

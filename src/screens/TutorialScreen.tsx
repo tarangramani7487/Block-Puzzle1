@@ -156,6 +156,7 @@ export function TutorialScreen() {
     if (!piece) return null;
     const shape = getShape(piece.shapeId);
     const { row, col } = step.target;
+    if (!canPlace(game.board, shape, row, col)) return null;
     const lines = findFullLines(placeShape(game.board, shape, row, col, piece.level));
     return { shapeId: piece.shapeId, level: piece.level, row, col, valid: true, ...lines };
   }, [piece, step, game.board]);

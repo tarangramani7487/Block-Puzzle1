@@ -1,0 +1,95 @@
+Block Puzzle — Keyword Research & Strategy
+===========================================
+
+Primary (must appear in app name / subtitle / short description)
+----------------------------------------------------------------
+block puzzle                HIGH volume, HIGH competition — core term
+block puzzle game           HIGH volume, exact match to app genre
+puzzle game                 VERY HIGH volume, generic — only via long-tail
+
+
+Secondary (weave into long description, Google Play especially)
+---------------------------------------------------------------
+block blast                 TRENDING (2024-2026) — competitors ranking well
+block game                  HIGH volume, moderate competition
+color puzzle                MED volume — pairs well with fusion mechanic
+block fusion                LOW volume but UNIQUE — own this term
+fuse puzzle                 LOW volume — own this term
+combo puzzle                LOW volume — differentiator
+drop puzzle                 LOW volume — describes core action
+line clear puzzle           LOW volume, HIGH intent
+
+
+Long-tail / modifier keywords (great for both stores)
+-----------------------------------------------------
+free puzzle games           HIGH — people search "free X"
+offline puzzle games        HIGH — monetisable niche (no wifi games)
+no wifi games               HIGH — airplane, travel, kids
+no ads puzzle               MED — differentiator if we stay ad-free
+puzzle games offline        HIGH — same as above, reversed
+brain games                 VERY HIGH — compete with Lumosity, etc.
+brain training              HIGH — same cluster
+relaxing games              HIGH — before-bed audience
+casual puzzle               HIGH — browsing audience
+
+
+Related genre terms (steal traffic from adjacent games)
+-------------------------------------------------------
+wood block puzzle           VERY HIGH — the dominant block puzzle sub-niche
+block jam                   HIGH — specific competitor
+tetris                      HIGH but trademarked — reference only, don't use
+sudoku block                MED — crossover audience
+1010 block puzzle           HIGH — "1010!" style, 10x10 grid like ours
+match blocks                MED — tangential
+
+
+App Store keywords field — 100 character budget
+------------------------------------------------
+Rules:
+  • Never repeat words already in the App Name or Subtitle (Apple indexes
+    both; repetition wastes your 100 chars).
+  • Comma-separated, NO SPACES after commas.
+  • Apple handles plurals and basic stemming — use the singular form.
+  • Treat each comma-separated item as a word that can combine with any
+    other word to form a two-word phrase. "block,wood,puzzle" ranks for
+    "wood block puzzle" too.
+
+Current reserved words (already in name + subtitle):
+  App Name: Block Puzzle: Games
+  Subtitle: Drop, Fuse, Clear, Combo!
+  → Reserved: block, puzzle, games, drop, fuse, clear, combo
+
+Current keywords (99 chars):
+  blast,brain,offline,wood,color,line,relax,casual,tetris,jam,sudoku,match,chain,board,grid
+
+Note: "block", "puzzle", "games", "drop", "fuse", "clear", "combo" are already
+indexed via app name + subtitle. Keep them out of the keywords field to avoid
+wasting the 100-char budget.
+
+
+Google Play — no keyword field
+-------------------------------
+Google Play scans the FULL description. The full-description.txt file is
+tuned for ~2.5% density on "block puzzle", 1–2 mentions each of secondary
+terms, and natural (not spammy) placement. Do NOT keyword-stuff — Play
+Protect flags listings with unnatural keyword density.
+
+
+Competitor benchmarks (as of writing)
+-------------------------------------
+Top block puzzle apps consistently use:
+  • "Block Puzzle" or "Block Blast" as the first two words of the app name
+  • A benefit-first subtitle (e.g. "Classic Puzzle Challenge")
+  • 4000-char descriptions with heavy use of ★ bullets and short paragraphs
+  • Daily-mechanic emphasis (daily puzzle, daily rewards) for retention signals
+
+
+Next steps
+----------
+1. Launch with the English copy in this folder.
+2. After 2 weeks, pull search impression data in Play Console / App Store
+   Connect's "Search Terms" report.
+3. Rotate the lowest-volume secondary keyword into the slot of any term
+   that is driving zero installs.
+4. Localise into Hindi (hi), Spanish (es-ES, es-MX), Portuguese (pt-BR),
+   and Indonesian (id) for highest casual-puzzle ROI.

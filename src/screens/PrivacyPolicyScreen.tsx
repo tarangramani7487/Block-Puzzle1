@@ -8,8 +8,7 @@ import { colors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 
-// TODO: set the real support address before publishing the policy.
-const CONTACT_EMAIL = 'your-email@example.com';
+const CONTACT_EMAIL = 'tarangramani7487@gmail.com';
 const DEVELOPER = 'Block Puzzle';
 const EFFECTIVE_DATE = 'October 19, 2026';
 

@@ -1,0 +1,75 @@
+Block Puzzle — Store Metadata (categories, ratings, tags)
+==========================================================
+
+Google Play Console
+-------------------
+App category         Games
+App type             Game
+Game category        Puzzle                 (primary)
+Tags (max 5)         Puzzle, Casual, Brain Games, Offline, Family Friendly
+Content rating       Everyone
+                     (Use the IARC questionnaire — all answers "No" for the
+                     violence, scary, drug, gambling, and mature sections.)
+Target age group     13+ (safe default; drop to Everyone 10+ once rated)
+Target audience      All ages — no personalised ads
+Contains ads         No            (change to Yes if/when ads are added)
+In-app purchases     No            (change to Yes if/when IAP is added)
+Data safety          No data collected / No data shared
+                     (Firebase Analytics data is pseudonymous and aggregated;
+                     declare "App activity" as collected but NOT linked to
+                     user identity, and NOT shared.)
+Privacy policy URL   https://<your-domain>/privacy-policy
+
+
+Apple App Store Connect
+-----------------------
+Primary category     Games
+Primary subcategory  Puzzle
+Copyright            © 2026 Harsh Ramani
+                     (App Store Connect requires this field. Format:
+                     "© YYYY <legal entity>". Use your registered company
+                     name if the app is published under one; otherwise your
+                     legal personal name. See app-store/copyright.txt.)
+Secondary subcategory Family           (or Casual, depending on target)
+Age rating           4+               (no violence, no mature themes)
+Price tier           Free (Tier 0)
+Available in         All territories unless specific country concerns
+In-App Purchases     None at launch
+Game Center          Off at launch (opt in later for leaderboards)
+Privacy — Nutrition  Diagnostics data: Crash data, Performance data (via
+                     Crashlytics) — NOT linked to identity, NOT used for
+                     tracking.
+                     Identifiers: Device ID (via Firebase Analytics) — NOT
+                     linked to identity, NOT used for tracking.
+                     Everything else: No data collected.
+Privacy policy URL   https://<your-domain>/privacy-policy
+Support URL          https://<your-domain>/support   (or mailto link)
+Marketing URL        https://<your-domain>
+
+
+Assets you still need before submission
+----------------------------------------
+Google Play
+  • Feature graphic: 1024 x 500 PNG/JPG
+  • App icon:        512 x 512 PNG (hi-res, already in assets/store/)
+  • Phone screenshots: 2–8 PNG/JPG, min dimension 320 px, max 3840 px
+                       Aspect ratio between 16:9 and 9:16
+  • 7-inch tablet screenshots (optional but recommended)
+  • 10-inch tablet screenshots (optional but recommended)
+
+Apple App Store
+  • App icon: 1024 x 1024 PNG, no transparency (already in assets/store/)
+  • iPhone 6.9" screenshots: 1290 x 2796 (iPhone 16 Pro Max) — REQUIRED
+  • iPhone 6.5" screenshots: 1242 x 2688 (iPhone 11 Pro Max) — recommended
+  • iPhone 5.5" screenshots: 1242 x 2208 (older iPhones) — recommended
+  • iPad 13" screenshots:    2048 x 2732 — required if supportsTablet=true
+  • App Preview video: optional, 15–30 sec, portrait
+
+
+Screenshot copy ideas (overlay text, ordered by importance)
+-----------------------------------------------------------
+1. "Drop. Clear. FUSE."                 — show mid-fusion blast
+2. "Chain combos for huge scores"       — screenshot of x3+ combo banner
+3. "Daily Puzzle, Daily Rewards"        — Daily screen
+4. "Unlock new themes"                  — Shop screen
+5. "100% offline. No forced ads."       — airplane icon over gameplay

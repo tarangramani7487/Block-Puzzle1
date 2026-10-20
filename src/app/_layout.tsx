@@ -5,12 +5,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { ForceUpdateModal } from '../components/ForceUpdateModal';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { GameProvider, useGame } from '../hooks/GameProvider';
 import { colors } from '../theme/colors';
+import { checkAppUpdate, type AppUpdateState } from '../utils/appUpdate';
 // Initialises Firebase at launch so Analytics records the visit from the first screen.
-import '../utils/firebase';
+import { setupCrashlytics } from '../utils/firebase';
 import { setupNotifications } from '../utils/notifications';
+
+// Enable Crashlytics and route uncaught JS errors to it before any screen renders.
+setupCrashlytics();
 
 // Keep the native splash up until the loading screen has drawn its first frame.
 SplashScreen.preventAutoHideAsync();
@@ -34,6 +39,12 @@ function LaunchGate() {
 }
 
 export default function RootLayout() {
+  const [appUpdate, setAppUpdate] = useState<AppUpdateState | null>(null);
+  useEffect(() => {
+    // Remote-config check must not block launch; show the modal only if it answers "required".
+    checkAppUpdate().then(setAppUpdate).catch(() => {});
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bgBottom }}>
       <SafeAreaProvider>
@@ -54,6 +65,12 @@ export default function RootLayout() {
             <Stack.Screen name="privacy-policy" />
           </Stack>
           <LaunchGate />
+          {appUpdate?.required && (
+            <ForceUpdateModal
+              requiredVersion={appUpdate.requiredVersion}
+              currentVersion={appUpdate.currentVersion}
+            />
+          )}
         </GameProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

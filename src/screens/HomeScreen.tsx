@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GameButton, IconButton } from '../components/Buttons';
@@ -16,12 +16,7 @@ import { colors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 
-/** Logo mark: a 3×3 cluster of blocks. */
-const LOGO: readonly (readonly number[])[] = [
-  [1, 2, 3],
-  [6, 6, 4],
-  [5, 6, 2],
-];
+const LOGO_IMAGE = require('../../assets/store/logo.png');
 
 function MenuTile({ icon, label, badge, onPress }: { icon: IconName; label: string; badge?: number; onPress: () => void }) {
   return (
@@ -49,7 +44,7 @@ export function HomeScreen() {
   // First install only: learn by playing before anything else.
   const showTutorial = hydrated && !settings.tutorialSeen;
 
-  const logoCell = Math.min(64, width * 0.15, height * 0.075);
+  const logoSize = Math.min(220, width * 0.5, height * 0.26);
   const inProgress = game.moveCount > 0 && !game.gameOver;
 
   const play = () => {
@@ -73,15 +68,12 @@ export function HomeScreen() {
         </View>
 
         <View style={styles.hero}>
-          <View style={[styles.logoGrid, { width: logoCell * 3 + 12, padding: 6 }]}>
-            {LOGO.flatMap((row, r) =>
-              row.map((level, c) => (
-                <View key={`${r}-${c}`} style={{ padding: 2 }}>
-                  <GameBlock level={level} size={logoCell - 4} />
-                </View>
-              )),
-            )}
-          </View>
+          <Image
+            source={LOGO_IMAGE}
+            style={[styles.logoImage, { width: logoSize, height: logoSize }]}
+            resizeMode="contain"
+            accessibilityLabel="Block Puzzle logo"
+          />
           <Text style={styles.title}>BLOCK</Text>
           <Text style={[styles.title, styles.titleAccent]}>PUZZLE</Text>
           <View style={styles.ladder}>
@@ -172,11 +164,8 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: 12, fontWeight: '900', color: colors.text },
   hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  logoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  logoImage: {
     borderRadius: radius.lg,
-    backgroundColor: 'rgba(0,0,0,0.25)',
     marginBottom: spacing.xl,
   },
   title: {
