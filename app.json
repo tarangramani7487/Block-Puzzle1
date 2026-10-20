@@ -27,7 +27,7 @@
         "foregroundImage": "./assets/store/logo.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.game.block.puzzle",
+      "package": "com.htr.block.puzzle",
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ],

@@ -12,7 +12,7 @@ const DEFAULT_MIN_VERSION = "0.0.0";
 
 // iOS App Store numeric ID. Set once the app is listed; until then iOS falls back to a web search.
 const IOS_APP_STORE_ID: string | null = null;
-const ANDROID_PACKAGE = "com.game.block.puzzle";
+const ANDROID_PACKAGE = "com.htr.block.puzzle";
 
 export interface AppUpdateState {
   required: boolean;
